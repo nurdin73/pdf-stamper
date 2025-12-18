@@ -226,3 +226,7 @@ function pxToMm(px) {
    - Use randomized filenames.
    - Set a short TTL (Time To Live).
    - Store in non-public storage if possible.
+
+## 📜 License
+
+This package is open-sourced software licensed under the MIT license.
