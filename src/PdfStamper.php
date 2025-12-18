@@ -12,6 +12,8 @@ class PdfStamper
     protected string $sourceFile;
 
     protected array $onlyPages = [];
+    protected array $metadata = [];
+    protected array $customMetadata = [];
     protected ?array $fileEncryption = null;
     protected ?string $fileEncryptionKey = null;
 
@@ -23,12 +25,20 @@ class PdfStamper
      |  INSTANCE CONTROL
      ========================== */
 
+    /**
+     * Reset the instance
+     * @return PdfStamper|null
+     */
     public static function resetInstance(): self
     {
         static::$instance = new self();
         return static::$instance;
     }
 
+    /**
+     * Get the instance
+     * @return PdfStamper
+     */
     public static function instance(): self
     {
         if (!static::$instance) {
@@ -42,6 +52,11 @@ class PdfStamper
      |  CORE SETUP
      ========================== */
 
+    /**
+     * Load a PDF file
+     * @param string $path
+     * @return PdfStamper
+     */
     public function fromFile(string $path): self
     {
         $this->sourceFile = $path;
@@ -62,10 +77,37 @@ class PdfStamper
         return $this;
     }
 
+    /**
+     * Encrypt the PDF with a password
+     * @param ?string $key
+     * @return PdfStamper
+     */
     public function encryptFileWithKey(?string $key): self
     {
         $this->fileEncryptionKey = $key;
 
+        return $this;
+    }
+
+    /**
+     * Add metadata to the PDF file
+     * @param array $metadata
+     * @return PdfStamper
+     */
+    public function addMetadata(array $metadata): self
+    {
+        $this->metadata = array_merge($this->metadata, $metadata);
+        return $this;
+    }
+
+    /**
+     * Add custom metadata to the PDF file
+     * @param array $metadata
+     * @return PdfStamper
+     */
+    public function addCustomMetadata(array $metadata): self
+    {
+        $this->customMetadata = array_merge($this->customMetadata, $metadata);
         return $this;
     }
 
@@ -90,6 +132,14 @@ class PdfStamper
      |  STAMP METHODS
      ========================== */
 
+    /**
+     * Stamp text on the PDF
+     * @param string $text
+     * @param float $x
+     * @param float $y
+     * @param array $options
+     * @return PdfStamper
+     */
     public function stampText(string $text, float $x, float $y, array $options = []): self
     {
         $onlyPages = $this->onlyPages;
@@ -119,6 +169,14 @@ class PdfStamper
         return $this;
     }
 
+    /**
+     * Stamp HTML on the PDF
+     * @param string $html
+     * @param float $x
+     * @param float $y
+     * @param array $options
+     * @return PdfStamper
+     */
     public function stampHtml(string $html, float $x, float $y, array $options = []): self
     {
         $onlyPages = $this->onlyPages;
@@ -144,6 +202,14 @@ class PdfStamper
         return $this;
     }
 
+    /**
+     * Stamp an image on the PDF
+     * @param string $path
+     * @param float $x
+     * @param float $y
+     * @param array $options
+     * @return PdfStamper
+     */
     public function stampImage(string $path, float $x, float $y, array $options = []): self
     {
         $onlyPages = $this->onlyPages;
@@ -173,6 +239,12 @@ class PdfStamper
      |  WATERMARK
      ========================== */
 
+    /**
+     * Stamp text as a watermark on the PDF
+     * @param string $text
+     * @param array $options
+     * @return PdfStamper
+     */
     public function watermarkText(string $text, array $options = []): self
     {
         $options['opacity'] ??= 0.15;
@@ -213,6 +285,11 @@ class PdfStamper
      |  APPLY CONFIG
      ========================== */
 
+    /**
+     * Apply configuration to the PDF
+     * @param array $config
+     * @return PdfStamper
+     */
     public function applyConfig(array $config): self
     {
         if (!empty($config['stamp'])) {
@@ -240,40 +317,15 @@ class PdfStamper
      |  SECURITY
      ========================== */
 
+    /**
+     * Encrypt the PDF with a password
+     * @param string $password
+     * @return PdfStamper
+     */
     public function encryptPdf(string $password): self
     {
         $this->pdf->SetProtection(['print'], $password, null, 0);
         return $this;
-    }
-
-    protected function encryptFile(string $path): void
-    {
-        if (!$this->fileEncryptionKey) {
-            return;
-        }
-
-        $data = file_get_contents($path);
-
-        $key = hash('sha256', $this->fileEncryptionKey, true); // 32 bytes
-        $iv  = random_bytes(12); // GCM standard
-        $tag = '';
-
-        $encrypted = openssl_encrypt(
-            $data,
-            'aes-256-gcm',
-            $key,
-            OPENSSL_RAW_DATA,
-            $iv,
-            $tag
-        );
-
-        if ($encrypted === false) {
-            throw new \RuntimeException('File encryption failed.');
-        }
-
-        $payload = $iv . $encrypted . $tag;
-
-        file_put_contents($path, $payload);
     }
 
 
@@ -285,6 +337,8 @@ class PdfStamper
     {
         $this->renderPdf();
         $this->applyStamps();
+        $this->applyMetadata();
+        $this->applyCustomMetadata();
 
         $this->pdf->Output($path, 'F');
 
@@ -319,6 +373,73 @@ class PdfStamper
 
         file_put_contents($outputPath, $data);
     }
+
+    protected function encryptFile(string $path): void
+    {
+        if (!$this->fileEncryptionKey) {
+            return;
+        }
+
+        $data = file_get_contents($path);
+
+        $key = hash('sha256', $this->fileEncryptionKey, true); // 32 bytes
+        $iv  = random_bytes(12); // GCM standard
+        $tag = '';
+
+        $encrypted = openssl_encrypt(
+            $data,
+            'aes-256-gcm',
+            $key,
+            OPENSSL_RAW_DATA,
+            $iv,
+            $tag
+        );
+
+        if ($encrypted === false) {
+            throw new \RuntimeException('File encryption failed.');
+        }
+
+        $payload = $iv . $encrypted . $tag;
+
+        file_put_contents($path, $payload);
+    }
+
+    protected function applyMetadata(): void
+    {
+        if (!empty($this->metadata['Title'])) {
+            $this->pdf->SetTitle($this->metadata['Title']);
+        }
+
+        if (!empty($this->metadata['Author'])) {
+            $this->pdf->SetAuthor($this->metadata['Author']);
+        }
+
+        if (!empty($this->metadata['Subject'])) {
+            $this->pdf->SetSubject($this->metadata['Subject']);
+        }
+
+        if (!empty($this->metadata['Keywords'])) {
+            $this->pdf->SetKeywords($this->metadata['Keywords']);
+        }
+
+        $this->pdf->SetCreator(
+            $this->metadata['Creator'] ?? 'PdfStamper'
+        );
+    }
+
+    protected function applyCustomMetadata(): void
+    {
+        if (empty($this->customMetadata)) {
+            return;
+        }
+
+        $json = json_encode($this->customMetadata, JSON_THROW_ON_ERROR);
+
+        $this->pdf->SetKeywords(
+            trim(($this->metadata['Keywords'] ?? '') . ' | meta:' . base64_encode($json))
+        );
+    }
+
 
 
     protected function renderPdf(): void

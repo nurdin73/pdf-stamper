@@ -137,6 +137,31 @@ PdfStamper::decryptFile(
 );
 ```
 
+### 6. Add Metadata to PDF
+
+```php
+PdfStamper::resetInstance()
+    ->fromFile($source)
+    ->addMetadata([
+        'Title' => 'Document Title',
+        'Author' => 'Author Name',
+        'Subject' => 'Document Subject',
+        'Keywords' => 'keyword1, keyword2',
+    ])
+    ->save($output);
+```
+
+### 7. Add Custom Metadata to PDF
+
+```php
+PdfStamper::resetInstance()
+    ->fromFile($source)
+    ->addCustomMetadata([
+        'custom_key' => 'custom_value',
+    ])
+    ->save($output);
+```
+
 ---
 
 ## 🔁 Single Source of Truth (`applyConfig`)

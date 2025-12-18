@@ -181,6 +181,46 @@ class PdfStamperTest extends TestCase
     }
 
     #[Test]
+    public function it_can_add_metadata(): void
+    {
+        $output = $this->getTestOutputPath('test-metadata.pdf');
+
+        PdfStamper::resetInstance()
+            ->fromFile($this->sourcePdf)
+            ->addMetadata([
+                'Title' => 'Test PDF',
+                'Author' => 'PdfStamper',
+                'Subject' => 'Test PDF',
+                'Keywords' => 'test pdf',
+                'Creator' => 'PdfStamper',
+                'Producer' => 'PdfStamper',
+            ])
+            ->save($output);
+
+        $this->assertFileExists($output);
+    }
+
+    #[Test]
+    public function it_can_add_custom_metadata(): void
+    {
+        $output = $this->getTestOutputPath('test-custom-metadata.pdf');
+
+        PdfStamper::resetInstance()
+            ->fromFile($this->sourcePdf)
+            ->addCustomMetadata([
+                'Title' => 'Test PDF',
+                'Author' => 'PdfStamper',
+                'Subject' => 'Test PDF',
+                'Keywords' => 'test pdf',
+                'Creator' => 'PdfStamper',
+                'Producer' => 'PdfStamper',
+            ])
+            ->save($output);
+
+        $this->assertFileExists($output);
+    }
+
+    #[Test]
     public function it_can_stamp_on_specific_pages(): void
     {
         $output = $this->getTestOutputPath('test-specific-page.pdf');
