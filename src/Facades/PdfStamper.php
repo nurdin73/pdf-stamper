@@ -1,9 +1,9 @@
 <?php
 
-namespace KarungBolong\PdfStamper\Facades;
+namespace Nurdin73\PdfStamper\Facades;
 
 use Illuminate\Support\Facades\Facade;
-use KarungBolong\PdfStamper\PdfStamper as PdfStamperService;
+use Nurdin73\PdfStamper\PdfStamper as PdfStamperService;
 
 class PdfStamper extends Facade
 {

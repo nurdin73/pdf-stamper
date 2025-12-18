@@ -47,7 +47,7 @@ Designed specifically for:
 Install the package via Composer:
 
 ```bash
-composer require karungbolong/pdf-stamper
+composer require nurdin73/pdf-stamper
 ```
 
 Publish the configuration file (optional):

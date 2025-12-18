@@ -1,8 +1,8 @@
 <?php
 
-namespace KarungBolong\PdfStamper\Tests;
+namespace Nurdin73\PdfStamper\Tests;
 
-use KarungBolong\PdfStamper\Facades\PdfStamper;
+use Nurdin73\PdfStamper\Facades\PdfStamper;
 use PHPUnit\Framework\Attributes\Test;
 
 class PdfStamperTest extends TestCase

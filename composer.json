@@ -1,5 +1,5 @@
 {
-  "name": "karungbolong/pdf-stamper",
+  "name": "nurdin73/pdf-stamper",
   "description": "Laravel PDF stamping and watermarking with TCPDF & FPDI",
   "type": "library",
   "require": {
@@ -13,21 +13,21 @@
   },
   "autoload": {
     "psr-4": {
-      "KarungBolong\\PdfStamper\\": "src/"
+      "Nurdin73\\PdfStamper\\": "src/"
     }
   },
   "autoload-dev": {
     "psr-4": {
-      "KarungBolong\\PdfStamper\\Tests\\": "tests/"
+      "Nurdin73\\PdfStamper\\Tests\\": "tests/"
     }
   },
   "extra": {
     "laravel": {
       "providers": [
-        "KarungBolong\\PdfStamper\\PdfStamperServiceProvider"
+        "Nurdin73\\PdfStamper\\PdfStamperServiceProvider"
       ],
       "aliases": {
-        "PdfStamper": "KarungBolong\\PdfStamper\\Facades\\PdfStamper"
+        "PdfStamper": "Nurdin73\\PdfStamper\\Facades\\PdfStamper"
       }
     }
   },

@@ -1,6 +1,6 @@
 <?php
 
-namespace KarungBolong\PdfStamper;
+namespace Nurdin73\PdfStamper;
 
 use setasign\Fpdi\Tcpdf\Fpdi as TcpdfFpdi;
 

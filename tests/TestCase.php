@@ -1,8 +1,8 @@
 <?php
 
-namespace KarungBolong\PdfStamper\Tests;
+namespace Nurdin73\PdfStamper\Tests;
 
-use KarungBolong\PdfStamper\PdfStamperServiceProvider;
+use Nurdin73\PdfStamper\PdfStamperServiceProvider;
 use Orchestra\Testbench\TestCase as Orchestra;
 
 abstract class TestCase extends Orchestra
@@ -17,7 +17,7 @@ abstract class TestCase extends Orchestra
     protected function getPackageAliases($app): array
     {
         return [
-            'PdfStamper' => \KarungBolong\PdfStamper\Facades\PdfStamper::class,
+            'PdfStamper' => \Nurdin73\PdfStamper\Facades\PdfStamper::class,
         ];
     }
 
