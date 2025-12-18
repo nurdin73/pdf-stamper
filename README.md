@@ -125,6 +125,18 @@ PdfStamper::resetInstance()
     ->save($output);
 ```
 
+### 5. Decrypt File (Optional)
+
+```php
+use PdfStamper;
+
+PdfStamper::decryptFile(
+    storage_path('secure/encrypted.pdf'),
+    'my-secret-key',
+    storage_path('temp/decrypted.pdf')
+);
+```
+
 ---
 
 ## 🔁 Single Source of Truth (`applyConfig`)
@@ -171,14 +183,10 @@ Restrict PDF access via opening password.
 ->encryptPdf('viewer-password')
 ```
 
-### File-Level Encryption
-
-Encrypt physical files in storage.
+### Encrypt File (Optional)
 
 ```php
-->encryptFile([
-    'key' => 'secret-key'
-])
+->encryptFileWithKey('my-secret-key')
 ```
 
 ---

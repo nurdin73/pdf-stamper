@@ -13,6 +13,8 @@ class PdfStamper
 
     protected array $onlyPages = [];
     protected ?array $fileEncryption = null;
+    protected ?string $fileEncryptionKey = null;
+
 
     /** @var array<callable> Queue of stamp operations to apply after rendering */
     protected array $stampQueue = [];
@@ -59,6 +61,14 @@ class PdfStamper
 
         return $this;
     }
+
+    public function encryptFileWithKey(?string $key): self
+    {
+        $this->fileEncryptionKey = $key;
+
+        return $this;
+    }
+
 
     /* ==========================
      |  PAGE FILTER
@@ -236,11 +246,36 @@ class PdfStamper
         return $this;
     }
 
-    public function encryptFile(array $options): self
+    protected function encryptFile(string $path): void
     {
-        $this->fileEncryption = $options;
-        return $this;
+        if (!$this->fileEncryptionKey) {
+            return;
+        }
+
+        $data = file_get_contents($path);
+
+        $key = hash('sha256', $this->fileEncryptionKey, true); // 32 bytes
+        $iv  = random_bytes(12); // GCM standard
+        $tag = '';
+
+        $encrypted = openssl_encrypt(
+            $data,
+            'aes-256-gcm',
+            $key,
+            OPENSSL_RAW_DATA,
+            $iv,
+            $tag
+        );
+
+        if ($encrypted === false) {
+            throw new \RuntimeException('File encryption failed.');
+        }
+
+        $payload = $iv . $encrypted . $tag;
+
+        file_put_contents($path, $payload);
     }
+
 
     /* ==========================
      |  SAVE
@@ -251,19 +286,40 @@ class PdfStamper
         $this->renderPdf();
         $this->applyStamps();
 
-        if ($this->fileEncryption) {
-            // First output to get raw PDF, then encrypt
-            $tempPath = $path . '.tmp';
-            $this->pdf->Output($tempPath, 'F');
-            $content = file_get_contents($tempPath);
-            $encrypted = encrypt($content, false);
-            file_put_contents($path, $encrypted);
-            unlink($tempPath);
-            return;
+        $this->pdf->Output($path, 'F');
+
+        $this->encryptFile($path);
+    }
+
+    public static function decryptFile(
+        string $encryptedPath,
+        string $key,
+        string $outputPath
+    ): void {
+        $payload = file_get_contents($encryptedPath);
+
+        $iv  = substr($payload, 0, 12);
+        $tag = substr($payload, -16);
+        $enc = substr($payload, 12, -16);
+
+        $key = hash('sha256', $key, true);
+
+        $data = openssl_decrypt(
+            $enc,
+            'aes-256-gcm',
+            $key,
+            OPENSSL_RAW_DATA,
+            $iv,
+            $tag
+        );
+
+        if ($data === false) {
+            throw new \RuntimeException('Invalid encryption key or corrupted file.');
         }
 
-        $this->pdf->Output($path, 'F');
+        file_put_contents($outputPath, $data);
     }
+
 
     protected function renderPdf(): void
     {
@@ -310,6 +366,30 @@ class PdfStamper
         if (($options['layer'] ?? 'over') === 'under') {
             $this->pdf->setPageMark();
         }
+    }
+
+    protected function resolveEncryptionFile($file, string $key)
+    {
+        $key = hash('sha256', $key, true); // 32 bytes
+        $iv  = random_bytes(12); // GCM standard
+        $tag = '';
+
+        $encrypted = openssl_encrypt(
+            $file,
+            'aes-256-gcm',
+            $key,
+            OPENSSL_RAW_DATA,
+            $iv,
+            $tag
+        );
+
+        if ($encrypted === false) {
+            throw new \RuntimeException('File encryption failed.');
+        }
+
+        $payload = $iv . $encrypted . $tag;
+
+        return $payload;
     }
 
     protected function resolvePosition(array $options): array

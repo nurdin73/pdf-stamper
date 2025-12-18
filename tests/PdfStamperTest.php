@@ -100,6 +100,67 @@ class PdfStamperTest extends TestCase
     }
 
     #[Test]
+    public function test_file_is_encrypted()
+    {
+        $output = $this->getTestOutputPath('test-encrypt-physical.pdf');
+        PdfStamper::resetInstance()
+            ->fromFile($this->sourcePdf)
+            ->stampText('Secure', 10, 10)
+            ->encryptFileWithKey('secret123')
+            ->save($output);
+
+        $content = file_get_contents($output);
+
+        $this->assertStringNotContainsString('%PDF', $content);
+    }
+
+    #[Test]
+    public function it_can_decrypt_encrypted_pdf_file_with_correct_key(): void
+    {
+        $key = 'super-secret-key';
+        $encrypted = $this->getTestOutputPath('test-to-decrypt.pdf');
+        $decrypted = $this->getTestOutputPath('test-decrypted.pdf');
+
+        PdfStamper::resetInstance()
+            ->fromFile($this->sourcePdf)
+            ->stampText('Secure', 10, 10)
+            ->encryptFileWithKey($key)
+            ->save($encrypted);
+
+        $this->assertFileExists($encrypted);
+
+        PdfStamper::decryptFile($encrypted, $key, $decrypted);
+
+        $this->assertFileExists($decrypted);
+    }
+
+    #[Test]
+    public function it_can_decrypt_encrypted_pdf_file_with_correct_key_with_wrong_key(): void
+    {
+        $key = 'super-secret-key';
+        $wrongKey = 'wrong-key';
+
+        $encrypted = $this->getTestOutputPath('test-to-decrypt.pdf');
+        $decrypted = $this->getTestOutputPath('test-decrypted.pdf');
+
+        PdfStamper::resetInstance()
+            ->fromFile($this->sourcePdf)
+            ->stampText('Secure', 10, 10)
+            ->encryptFileWithKey($key)
+            ->save($encrypted);
+
+        $this->assertFileExists($encrypted);
+
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('Invalid encryption key');
+
+        PdfStamper::decryptFile($encrypted, $wrongKey, $decrypted);
+
+        $this->assertFileExists($decrypted);
+        $this->expectException(\Exception::class);
+    }
+
+    #[Test]
     public function reset_instance_clears_previous_state(): void
     {
         $output1 = $this->getTestOutputPath('test1.pdf');
